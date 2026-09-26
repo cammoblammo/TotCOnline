@@ -23,7 +23,14 @@ os.makedirs(f"{OUT}/media/books", exist_ok=True)
 open(f"{OUT}/.nojekyll", "w").close()
 
 # ---------- shared stylesheet ----------
-css = """:root {
+css = """@font-face {
+  font-family: 'Decaf Please';
+  src: url('../fonts/decaf-please.woff2') format('woff2');
+  font-weight: normal;
+  font-display: swap;
+}
+
+:root {
   --color-bg: #FFFDF7;
   --color-text: #2B2A28;
   --color-muted: #6B6862;
@@ -200,7 +207,7 @@ def page(title, body, css_rel="assets/css/style.css"):
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{html.escape(title)}</title>
-<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{css_rel}">
 </head>
 <body>
