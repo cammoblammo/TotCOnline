@@ -1,3 +1,10 @@
+@font-face {
+  font-family: 'Decaf Please';
+  src: url('../fonts/decaf-please.woff2') format('woff2');
+  font-weight: normal;
+  font-display: swap;
+}
+
 :root {
   --color-bg: #FFFDF7;
   --color-text: #2B2A28;
