@@ -238,7 +238,25 @@ if extras:
         extra_rows += f'<a class="tune-row" href="{t["id"]}.html"><div class="name">{html.escape(t["title"])}</div></a>\n'
     extra_rows += "</div>\n"
 
+import glob, zipfile
+
+# Build the "download everything" zip automatically from whatever .mp3 files
+# are currently in media/audio/ — no manual step, always reflects what's there.
+ZIP_REL_PATH = "media/audio/totc-all-tunes.zip"
+audio_dir = f"{OUT}/media/audio"
+mp3_files = sorted(glob.glob(f"{audio_dir}/*.mp3"))
+all_zip_button = ""
+if mp3_files:
+    zip_path = f"{OUT}/{ZIP_REL_PATH}"
+    with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
+        for fpath in mp3_files:
+            zf.write(fpath, arcname=os.path.basename(fpath))
+    all_zip_button = f'<a class="button" href="../{ZIP_REL_PATH}">{DOWNLOAD_ICON} Download All Backing Tracks (zip)</a>'
+else:
+    print("No .mp3 files found in media/audio/ yet — skipping zip build.")
+
 tunes_index_body = f"""<div class="container">
+  <a class="back-link" href="../index.html">{BACK_ICON} Home</a>
   <div class="site-title">Tunes Off the Chain</div>
   <div class="subtitle">{len(tunes)} tunes — tap a number range to jump</div>
   <div class="jumpstrip">{jumpstrip}</div>
@@ -246,7 +264,8 @@ tunes_index_body = f"""<div class="container">
     {rows}
   </div>
   {extra_rows}
-  <div style="margin-top: 28px">
+  <div style="margin-top: 28px; display: flex; flex-direction: column; gap: 12px">
+    {all_zip_button}
     <a class="button" href="../books/index.html">{DOWNLOAD_ICON} Get the Song Books</a>
   </div>
 </div>
