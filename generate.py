@@ -52,7 +52,7 @@ a { color: inherit; text-decoration: none; }
 .site-title {
   font-family: var(--font-title);
   font-weight: normal;
-  font-size: 24px;
+  font-size: 34px;
   margin: 0 0 4px;
 }
 .subtitle { font-size: 14px; color: var(--color-muted); margin: 0 0 16px; }
@@ -69,7 +69,7 @@ a { color: inherit; text-decoration: none; }
   font-family: var(--font-title);
   font-weight: normal;
   letter-spacing: 0.02em;
-  font-size: 16px;
+  font-size: 19px;
   color: var(--color-text);
   border: none;
   cursor: pointer;
@@ -116,11 +116,11 @@ a { color: inherit; text-decoration: none; }
   min-height: 44px;
 }
 .tune-row .num {
-  width: 28px;
+  width: 30px;
   flex-shrink: 0;
   font-family: var(--font-title);
   font-weight: normal;
-  font-size: 15px;
+  font-size: 16px;
   color: var(--color-accent-text);
   text-align: center;
 }
@@ -162,7 +162,7 @@ a { color: inherit; text-decoration: none; }
   margin: 24px 0 8px;
 }
 .tune-number {
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 700;
   color: var(--color-accent-text);
   letter-spacing: 0.02em;
@@ -170,7 +170,7 @@ a { color: inherit; text-decoration: none; }
 .tune-title {
   font-family: var(--font-title);
   font-weight: normal;
-  font-size: 26px;
+  font-size: 40px;
   margin: 2px 0 0;
 }
 
