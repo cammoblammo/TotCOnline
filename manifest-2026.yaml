@@ -1,0 +1,245 @@
+tunes:
+  - number: 1
+    id: HandsUp
+    title: "Hands Up!"
+    file: media/audio/HandsUp.mp3
+    status: available
+  - number: 2
+    id: ThisIsTheWay
+    title: "This Is The Way"
+    file: media/audio/ThisIsTheWay.mp3
+    status: available
+  - number: 3
+    id: RearViewMirror
+    title: "Rear View Mirror"
+    file: media/audio/RearViewMirror.mp3
+    status: available
+  - number: 4
+    id: Turvytown
+    title: "Turvytown"
+    file: media/audio/Turvytown.mp3
+    status: available
+  - number: 5
+    id: OneForTheRoad
+    title: "One For The Road"
+    file: media/audio/OneForTheRoad.mp3
+    status: available
+  - number: 6
+    id: ConcreteJungle
+    title: "Concrete Jungle"
+    file: media/audio/ConcreteJungle.mp3
+    status: available
+  - number: 7
+    id: Lucidity
+    title: "Lucidity"
+    file: media/audio/Lucidity.mp3
+    status: available
+  - number: 8
+    id: TheHeathStreetHustle
+    title: "The Heath Street Hustle"
+    file: media/audio/TheHeathStreetHustle.mp3
+    status: available
+  - number: 9
+    id: HurkleDurkle
+    title: "Hurkle Durkle"
+    file: media/audio/HurkleDurkle.mp3
+    status: available
+  - number: 10
+    id: WhereverYouMayBe
+    title: "Wherever You May Be"
+    file: null
+    status: coming_soon
+  - number: 11
+    id: FromTheBeginningToTheEnd
+    title: "From The Beginning To The End"
+    file: media/audio/FromTheBeginningToTheEnd.mp3
+    status: available
+  - number: 12
+    id: Brainrot
+    title: "Brainrot"
+    file: media/audio/Brainrot.mp3
+    status: available
+  - number: 13
+    id: CobblersLoad
+    title: "Cobbler's Load"
+    file: media/audio/CobblersLoad.mp3
+    status: available
+  - number: 14
+    id: Drifting
+    title: "Drifting"
+    file: media/audio/Drifting.mp3
+    status: available
+  - number: 15
+    id: PetersLastStand
+    title: "Peter's Last Stand"
+    file: media/audio/PetersLastStand.mp3
+    status: available
+  - number: 16
+    id: Seeset
+    title: "Seeset"
+    file: media/audio/Seeset.mp3
+    status: available
+  - number: 17
+    id: RainRainGoAway
+    title: "Rain, Rain Go Away"
+    file: media/audio/RainRainGoAway.mp3
+    status: available
+  - number: 18
+    id: Somnambulism
+    title: "Somnambulism"
+    file: media/audio/Somnambulism.mp3
+    status: available
+  - number: 19
+    id: GreenGreatDragon
+    title: "Green Great Dragon"
+    file: media/audio/GreenGreatDragon.mp3
+    status: available
+  - number: 20
+    id: NuggieNugs
+    title: "Nuggie Nugs"
+    file: media/audio/NuggieNugs.mp3
+    status: available
+  - number: 21
+    id: DayAtTheBeach
+    title: "Day At The Beach"
+    file: media/audio/DayAtTheBeach.mp3
+    status: available
+  - number: 22
+    id: HeebieJeebies
+    title: "Heebie Jeebies"
+    file: media/audio/HeebieJeebies.mp3
+    status: available
+  - number: 23
+    id: WavingNotRaving
+    title: "Waving, Not Raving"
+    file: media/audio/WavingNotRaving.mp3
+    status: available
+  - number: 24
+    id: AnotherLook
+    title: "Another Look"
+    file: media/audio/AnotherLook.mp3
+    status: available
+  - number: 25
+    id: FiveAndFour
+    title: "Five And Four"
+    file: media/audio/FiveAndFour.mp3
+    status: available
+  - number: 26
+    id: BrewingCoffee
+    title: "Brewing Coffee"
+    file: media/audio/BrewingCoffee.mp3
+    status: available
+  - number: 27
+    id: MaximumMayhem
+    title: "Maximum Mayhem"
+    file: media/audio/MaximumMayhem.mp3
+    status: available
+  - number: 28
+    id: PressingOn
+    title: "Pressing On"
+    file: media/audio/PressingOn.mp3
+    status: available
+  - number: 29
+    id: SaltyToes
+    title: "Salty Toes"
+    file: media/audio/SaltyToes.mp3
+    status: available
+  - number: 30
+    id: HotCrossBuns
+    title: "Hot Cross Buns"
+    file: null
+    status: coming_soon
+  - number: 31
+    id: JoesMama
+    title: "Joe's Mama"
+    file: media/audio/JoesMama.mp3
+    status: available
+  - number: 32
+    id: BigBadMo
+    title: "Big Bad Mo"
+    file: media/audio/BigBadMo.mp3
+    status: available
+  - number: 33
+    id: Extrapolation
+    title: "Extrapolation"
+    file: media/audio/Extrapolation.mp3
+    status: available
+  - number: 34
+    id: TheDailyGrind
+    title: "The Daily Grind"
+    file: media/audio/TheDailyGrind.mp3
+    status: available
+  - number: 35
+    id: MaryHadALittleLamb
+    title: "Mary Had A Little Lamb"
+    file: media/audio/MaryHadALittleLamb.mp3
+    status: available
+  - number: 36
+    id: Avocado
+    title: "Avocado"
+    file: media/audio/Avocado.mp3
+    status: available
+  - number: 37
+    id: ReadyPlayerOne
+    title: "Ready Player One"
+    file: media/audio/ReadyPlayerOne.mp3
+    status: available
+  - number: 38
+    id: Cumulonimbus
+    title: "Cumulonimbus"
+    file: media/audio/Cumulonimbus.mp3
+    status: available
+  - number: 39
+    id: ThoughtsOfHome
+    title: "Thoughts Of Home"
+    file: media/audio/ThoughtsOfHome.mp3
+    status: available
+  - number: 40
+    id: AIApocalypse
+    title: "AI Apocalypse"
+    file: media/audio/AIApocalypse.mp3
+    status: available
+  - number: 41
+    id: BraveNewWorld
+    title: "Brave New World"
+    file: media/audio/BraveNewWorld.mp3
+    status: available
+  - number: 42
+    id: Phoenix
+    title: "Phoenix"
+    file: media/audio/Phoenix.mp3
+    status: available
+  - number: 43
+    id: PickAxe
+    title: "Pick Axe"
+    file: media/audio/PickAxe.mp3
+    status: available
+  - number: 44
+    id: AboveAndBeyond
+    title: "Above And Beyond"
+    file: media/audio/AboveAndBeyond.mp3
+    status: available
+  - number: 45
+    id: RiseAndShine
+    title: "Rise And Shine"
+    file: media/audio/RiseAndShine.mp3
+    status: available
+
+extras:  # not in the 2026 book, unnumbered, listed at the end
+  - id: FunkyRooster
+    title: "Funky Rooster"
+    file: media/audio/FunkyRooster.mp3
+  - id: BootsNCats
+    title: "Boots 'n' Cats"
+    file: media/audio/BootsNCats.mp3
+
+books:  # edit filenames/titles here — safe across regeneration
+  - title: "Tunes Off the Chain Trumpet Book"
+    file: media/books/TunesOffTheChain-Trumpet-2026.pdf
+    description: "PDF download"
+  - title: "Tunes Off the Chain Trombone Book"
+    file: media/books/TunesOffTheChain-Trombone-2026.pdf
+    description: "PDF download"
+  - title: "All Backing Tracks"
+    file: media/books/totc-all-tunes.zip
+    description: "Everything in one zip"

@@ -1,0 +1,17 @@
+# OS cruft
+.DS_Store
+Thumbs.db
+
+# Editor/IDE
+.vscode/
+*.swp
+*~
+
+# Python (from running generate.py)
+__pycache__/
+*.pyc
+
+# Raw audio masters, if you convert in-place
+# (uncomment if your .m4a originals live inside media/audio/ —
+#  only the .mp3 files need to be committed and served)
+# media/audio/*.m4a
