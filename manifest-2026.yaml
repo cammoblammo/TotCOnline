@@ -234,14 +234,10 @@ extras:  # not in the 2026 book, unnumbered, listed at the end
     file: media/audio/BootsNCats.mp3
 
 books:  # edit filenames/titles here — safe across regeneration
-  - title: "Trumpet Book"
-    file: media/books/trumpet-book.pdf
+  - title: "Tunes Off the Chain Trumpet Book"
+    file: media/books/TunesOffTheChain-Trumpet-2026.pdf
     description: "PDF download"
-  - title: "Trombone Book"
-    file: media/books/trombone-book.pdf
+  - title: "Tunes Off the Chain Trombone Book"
+    file: media/books/TunesOffTheChain-Trombone-2026.pdf
     description: "PDF download"
 
-# Belongs on the Tunes page, not here — it's the backing tracks, not a book.
-# Fill in once the zip actually exists; the Tunes page shows this button automatically.
-# all_tunes_zip:
-#   file: media/audio/totc-all-tunes.zip
