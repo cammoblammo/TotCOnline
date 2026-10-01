@@ -347,7 +347,7 @@ for b in books_list:
 '''
 
 books_body = f"""<div class="container">
-  <a class="back-link" href="../">{BACK_ICON} Home</a>
+  <a class="back-link" href="../index.html">{BACK_ICON} Home</a>
   <div class="site-title">Song Books</div>
   <div class="subtitle">Download the current edition</div>
   <div class="hub-links">
