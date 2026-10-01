@@ -245,19 +245,46 @@ if extras:
         extra_rows += f'<a class="tune-row" href="{t["id"]}.html"><div class="name">{html.escape(t["title"])}</div></a>\n'
     extra_rows += "</div>\n"
 
-import glob, zipfile
+import glob, zipfile, zlib
 
-# Build the "download everything" zip automatically from whatever .mp3 files
-# are currently in media/audio/ — no manual step, always reflects what's there.
+# Build the "download everything" zip from whatever .mp3 files are currently
+# in media/audio/. It's only rebuilt when the set of mp3s or their contents
+# differ from what's already in the zip, so regenerating the site doesn't
+# create a new 75 MB blob in git every time.
 ZIP_REL_PATH = "media/audio/totc-all-tunes.zip"
 audio_dir = f"{OUT}/media/audio"
 mp3_files = sorted(glob.glob(f"{audio_dir}/*.mp3"))
+
+def file_crc(path):
+    crc = 0
+    with open(path, "rb") as f:
+        while chunk := f.read(1 << 20):
+            crc = zlib.crc32(chunk, crc)
+    return crc
+
+def zip_is_current(zip_path, mp3_files):
+    # Compare by filename and CRC32 rather than mtime — git checkouts reset
+    # mtimes, so timestamps can't be trusted here.
+    if not os.path.exists(zip_path):
+        return False
+    try:
+        with zipfile.ZipFile(zip_path) as zf:
+            existing = {i.filename: i.CRC for i in zf.infolist()}
+    except zipfile.BadZipFile:
+        return False
+    wanted = {os.path.basename(p): file_crc(p) for p in mp3_files}
+    return existing == wanted
+
 all_zip_button = ""
 if mp3_files:
     zip_path = f"{OUT}/{ZIP_REL_PATH}"
-    with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
-        for fpath in mp3_files:
-            zf.write(fpath, arcname=os.path.basename(fpath))
+    if zip_is_current(zip_path, mp3_files):
+        print("Audio unchanged — keeping existing zip.")
+    else:
+        print("Audio changed — rebuilding zip.")
+        with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
+            for fpath in mp3_files:
+                zf.write(fpath, arcname=os.path.basename(fpath))
     all_zip_button = f'<a class="button" href="../{ZIP_REL_PATH}">{DOWNLOAD_ICON} Download All Backing Tracks (zip)</a>'
 else:
     print("No .mp3 files found in media/audio/ yet — skipping zip build.")

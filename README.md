@@ -1,16 +1,37 @@
-# Tunes Off the Chain — site skeleton
+# Tunes Off the Chain — website
 
-Generated from manifest-2026.yaml. NOT served by GitHub Pages (that's what .nojekyll and the README-exclusion convention is for) — just housekeeping notes for you.
+Static site for the Tunes Off the Chain brass method, served by GitHub Pages
+at tunesoffthechain.au (see CNAME). `.nojekyll` makes Pages serve files as-is,
+so this README is publicly reachable at /README.md — keep it free of anything
+private.
 
-## Before pushing
-1. Copy your converted .mp3 files into media/audio/ (filenames must exactly match the `file:` paths in the manifest, e.g. HandsUp.mp3).
-2. Copy the book PDFs and the all-tunes zip into media/books/, and update the placeholder links in books/index.html to the real filenames.
-3. Decide the two @font-face declarations aren't wired in yet — assets/css/style.css currently references 'Decaf Please' and falls back to 'Baloo 2' (Google Fonts) if the real font file isn't present. Add the real @font-face rule once you have a web licence + .woff2 file.
-4. When WhereverYouMayBe (10) and HotCrossBuns (30) get real audio: update their `status` to `available` and `file` path in manifest-2026.yaml, then re-run generate.py.
+## Layout
+- `manifest-2026.yaml` — source of truth: numbered tunes, unnumbered extras, song books.
+- `generate.py` — builds the site from the manifest.
+- `index.html`, `tunes/`, `books/`, `assets/css/style.css` — **generated**; don't hand-edit,
+  change `generate.py` (or the manifest) and regenerate instead.
+- `assets/fonts/decaf-please.woff2` — title font (falls back to Baloo 2 from Google Fonts).
+- `media/audio/` — backing tracks (.mp3) plus `totc-all-tunes.zip`.
+- `media/books/` — trumpet and trombone PDFs.
 
 ## Regenerating
-Edit manifest-2026.yaml, then:
-    python3 generate.py
-(needs pyyaml: pip install pyyaml --break-system-packages)
+Edit manifest-2026.yaml (or generate.py), then from the repo root:
 
-This regenerates tunes/index.html and every tunes/<id>.html page. It does NOT touch media/ or books/ — those are untouched by regeneration since they're not generated content.
+    python3 generate.py
+
+(needs pyyaml: `pip install pyyaml --break-system-packages`)
+
+This rewrites the CSS, the home page, the books page, tunes/index.html and every
+tunes/<id>.html page. The all-tunes zip is only rebuilt when the set of .mp3 files
+in media/audio/ or their contents have changed, so routine regeneration won't add
+a new copy of it to git history.
+
+## Adding or updating audio
+1. Copy the .mp3 into media/audio/ — the filename must exactly match the `file:`
+   path in the manifest (e.g. HandsUp.mp3).
+2. For a tune that was `coming_soon`, set its `status` to `available` and fill in
+   `file`. Still outstanding: WhereverYouMayBe (10) and HotCrossBuns (30).
+3. Run generate.py — the zip will be rebuilt automatically.
+
+## Updating the song books
+Put the new PDFs in media/books/ and update the `books:` entries in the manifest.
