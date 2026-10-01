@@ -10,7 +10,9 @@ private.
 - `generate.py` — builds the site from the manifest.
 - `index.html`, `tunes/`, `books/`, `assets/css/style.css` — **generated**; don't hand-edit,
   change `generate.py` (or the manifest) and regenerate instead.
-- `assets/fonts/decaf-please.woff2` — title font (falls back to Baloo 2 from Google Fonts).
+- `assets/fonts/decaf-please.woff2` — self-hosted title font.
+- `assets/icons/`, `favicon.ico` — favicon, home-screen icon and the link-preview image
+  (og-image.png). Static files, not generated; `favicon.svg` is the master.
 - `media/audio/` — backing tracks (.mp3) plus `totc-all-tunes.zip`.
 - `media/books/` — trumpet and trombone PDFs.
 
@@ -25,6 +27,9 @@ This rewrites the CSS, the home page, the books page, tunes/index.html and every
 tunes/<id>.html page. The all-tunes zip is only rebuilt when the set of .mp3 files
 in media/audio/ or their contents have changed, so routine regeneration won't add
 a new copy of it to git history.
+
+It also warns about any tune marked `available` whose .mp3 is missing, and deletes
+tune pages that are no longer in the manifest.
 
 ## Adding or updating audio
 1. Copy the .mp3 into media/audio/ — the filename must exactly match the `file:`
