@@ -47,8 +47,8 @@ tunes:
   - number: 10
     id: WhereverYouMayBe
     title: "Wherever You May Be"
-    file: null
-    status: coming_soon
+    file: media/audio/WhereverYouMayBe.mp3
+    status: available
   - number: 11
     id: FromTheBeginningToTheEnd
     title: "From The Beginning To The End"
