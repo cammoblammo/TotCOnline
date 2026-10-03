@@ -4,6 +4,8 @@ import yaml, os, html
 # generated files into the current directory.
 MANIFEST = "manifest-2026.yaml"
 OUT = "."
+SITE_URL = "https://tunesoffthechain.au"
+SITE_DESCRIPTION = "Backing tracks and song books for Tunes Off the Chain, a progressive brass method for trumpet and trombone."
 
 with open(MANIFEST) as f:
     data = yaml.safe_load(f)
@@ -37,7 +39,7 @@ css = """@font-face {
   --color-border: #EFE9DD;
   --color-accent: #DD8047;
   --color-accent-text: #A85A2E;
-  --font-title: 'Decaf Please', 'Baloo 2', sans-serif;
+  --font-title: 'Decaf Please', sans-serif;
   --font-body: 'Atkinson Hyperlegible', sans-serif;
 }
 * { box-sizing: border-box; }
@@ -126,10 +128,9 @@ a { color: inherit; text-decoration: none; }
 }
 .tune-row .name {
   flex: 1;
+  min-width: 0;
   font-size: 14px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow-wrap: break-word;
 }
 .tune-row.coming-soon {
   opacity: 0.6;
@@ -200,15 +201,33 @@ open(f"{OUT}/assets/css/style.css", "w").write(css)
 DOWNLOAD_ICON = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>'
 BACK_ICON = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>'
 
-def page(title, body, css_rel="assets/css/style.css"):
+def page(title, body, path, root="", description=SITE_DESCRIPTION):
+    # path: the page's URL path from the site root (for og:url);
+    # root: relative prefix back to the site root ("" or "../").
+    t = html.escape(title)
+    d = html.escape(description)
     return f"""<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{html.escape(title)}</title>
-<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="{css_rel}">
+<title>{t}</title>
+<meta name="description" content="{d}">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Tunes Off the Chain">
+<meta property="og:title" content="{t}">
+<meta property="og:description" content="{d}">
+<meta property="og:url" content="{SITE_URL}/{path}">
+<meta property="og:image" content="{SITE_URL}/assets/icons/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="{root}favicon.ico" sizes="any">
+<link rel="icon" href="{root}assets/icons/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="{root}assets/icons/apple-touch-icon.png">
+<link rel="preload" href="{root}assets/fonts/decaf-please.woff2" as="font" type="font/woff2" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{root}assets/css/style.css">
 </head>
 <body>
 {body}
@@ -245,20 +264,48 @@ if extras:
         extra_rows += f'<a class="tune-row" href="{t["id"]}.html"><div class="name">{html.escape(t["title"])}</div></a>\n'
     extra_rows += "</div>\n"
 
-import glob, zipfile
+import glob, zipfile, zlib
 
-# Build the "download everything" zip automatically from whatever .mp3 files
-# are currently in media/audio/ — no manual step, always reflects what's there.
+# Build the "download everything" zip from whatever .mp3 files are currently
+# in media/audio/. It's only rebuilt when the set of mp3s or their contents
+# differ from what's already in the zip, so regenerating the site doesn't
+# create a new 75 MB blob in git every time.
 ZIP_REL_PATH = "media/audio/totc-all-tunes.zip"
 audio_dir = f"{OUT}/media/audio"
 mp3_files = sorted(glob.glob(f"{audio_dir}/*.mp3"))
+
+def file_crc(path):
+    crc = 0
+    with open(path, "rb") as f:
+        while chunk := f.read(1 << 20):
+            crc = zlib.crc32(chunk, crc)
+    return crc
+
+def zip_is_current(zip_path, mp3_files):
+    # Compare by filename and CRC32 rather than mtime — git checkouts reset
+    # mtimes, so timestamps can't be trusted here.
+    if not os.path.exists(zip_path):
+        return False
+    try:
+        with zipfile.ZipFile(zip_path) as zf:
+            existing = {i.filename: i.CRC for i in zf.infolist()}
+    except zipfile.BadZipFile:
+        return False
+    wanted = {os.path.basename(p): file_crc(p) for p in mp3_files}
+    return existing == wanted
+
 all_zip_button = ""
 if mp3_files:
     zip_path = f"{OUT}/{ZIP_REL_PATH}"
-    with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
-        for fpath in mp3_files:
-            zf.write(fpath, arcname=os.path.basename(fpath))
-    all_zip_button = f'<a class="button" href="../{ZIP_REL_PATH}">{DOWNLOAD_ICON} Download All Backing Tracks (zip)</a>'
+    if zip_is_current(zip_path, mp3_files):
+        print("Audio unchanged — keeping existing zip.")
+    else:
+        print("Audio changed — rebuilding zip.")
+        with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
+            for fpath in mp3_files:
+                zf.write(fpath, arcname=os.path.basename(fpath))
+    zip_mb = round(os.path.getsize(zip_path) / 1_000_000)
+    all_zip_button = f'<a class="button" href="../{ZIP_REL_PATH}">{DOWNLOAD_ICON} Download All Backing Tracks (zip, {zip_mb} MB)</a>'
 else:
     print("No .mp3 files found in media/audio/ yet — skipping zip build.")
 
@@ -277,7 +324,8 @@ tunes_index_body = f"""<div class="container">
   </div>
 </div>
 """
-open(f"{OUT}/tunes/index.html", "w").write(page("Tunes Off the Chain — Tunes", tunes_index_body, css_rel="../assets/css/style.css"))
+open(f"{OUT}/tunes/index.html", "w").write(page("Tunes Off the Chain — Tunes", tunes_index_body, "tunes/index.html", root="../",
+    description="Listen to and download the backing tracks for Tunes Off the Chain."))
 
 # ---------- individual tune pages ----------
 def tune_page(t, is_extra=False):
@@ -292,14 +340,27 @@ def tune_page(t, is_extra=False):
   <a class="button" href="../{t['file']}" download>{DOWNLOAD_ICON} Download this tune</a>
 </div>
 """
-    return page(f"Tunes Off the Chain — {t['title']}", body, css_rel="../assets/css/style.css")
+    return page(f"Tunes Off the Chain — {t['title']}", body, f"tunes/{t['id']}.html", root="../",
+                description=f"{t['title']} — listen to or download the backing track.")
 
-for t in tunes:
-    if t["status"] == "available":
-        open(f"{OUT}/tunes/{t['id']}.html", "w").write(tune_page(t))
+pages_to_write = [(t, False) for t in tunes if t["status"] == "available"] + [(t, True) for t in extras]
 
-for t in extras:
-    open(f"{OUT}/tunes/{t['id']}.html", "w").write(tune_page(t, is_extra=True))
+# Warn about tunes marked available whose audio isn't there — otherwise the
+# page builds fine but the player and download button are dead.
+missing = [t for t, _ in pages_to_write if not t.get("file") or not os.path.exists(f"{OUT}/{t['file']}")]
+for t in missing:
+    print(f"WARNING: {t['id']} is available but its audio is missing: {t.get('file')}")
+
+for t, is_extra in pages_to_write:
+    open(f"{OUT}/tunes/{t['id']}.html", "w").write(tune_page(t, is_extra=is_extra))
+
+# Remove pages for tunes that have been renamed, removed or set back to
+# coming_soon, so they don't linger on the site.
+wanted_pages = {f"{t['id']}.html" for t, _ in pages_to_write} | {"index.html"}
+for fpath in glob.glob(f"{OUT}/tunes/*.html"):
+    if os.path.basename(fpath) not in wanted_pages:
+        os.remove(fpath)
+        print(f"Removed stale page: {fpath}")
 
 # ---------- books/index.html ----------
 BOOK_ICON = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent-text)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>'
@@ -320,7 +381,7 @@ for b in books_list:
 '''
 
 books_body = f"""<div class="container">
-  <a class="back-link" href="../">{BACK_ICON} Home</a>
+  <a class="back-link" href="../index.html">{BACK_ICON} Home</a>
   <div class="site-title">Song Books</div>
   <div class="subtitle">Download the current edition</div>
   <div class="hub-links">
@@ -328,7 +389,8 @@ books_body = f"""<div class="container">
   </div>
 </div>
 """
-open(f"{OUT}/books/index.html", "w").write(page("Tunes Off the Chain — Song Books", books_body, css_rel="../assets/css/style.css"))
+open(f"{OUT}/books/index.html", "w").write(page("Tunes Off the Chain — Song Books", books_body, "books/", root="../",
+    description="Download the Tunes Off the Chain trumpet and trombone song books (PDF)."))
 
 # ---------- root index.html (Hub) ----------
 hub_body = """<div class="container">
@@ -350,6 +412,6 @@ hub_body = """<div class="container">
   </div>
 </div>
 """
-open(f"{OUT}/index.html", "w").write(page("Tunes Off the Chain", hub_body))
+open(f"{OUT}/index.html", "w").write(page("Tunes Off the Chain", hub_body, ""))
 
 print("Generated:", sum(len(files) for _, _, files in os.walk(OUT)), "files")
