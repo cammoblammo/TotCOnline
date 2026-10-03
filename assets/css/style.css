@@ -12,7 +12,7 @@
   --color-border: #EFE9DD;
   --color-accent: #DD8047;
   --color-accent-text: #A85A2E;
-  --font-title: 'Decaf Please', 'Baloo 2', sans-serif;
+  --font-title: 'Decaf Please', sans-serif;
   --font-body: 'Atkinson Hyperlegible', sans-serif;
 }
 * { box-sizing: border-box; }
@@ -101,10 +101,9 @@ a { color: inherit; text-decoration: none; }
 }
 .tune-row .name {
   flex: 1;
+  min-width: 0;
   font-size: 14px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow-wrap: break-word;
 }
 .tune-row.coming-soon {
   opacity: 0.6;
