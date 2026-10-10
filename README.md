@@ -5,6 +5,23 @@ at tunesoffthechain.au (see CNAME). `.nojekyll` makes Pages serve files as-is,
 so this README is publicly reachable at /README.md — keep it free of anything
 private.
 
+## Editions and branches
+GitHub Pages serves `main`: the live site, for the published edition. The next
+edition is built up on its own branch, `edition-<year>` (now `edition-2027`): its
+tunes, tracks, books, and the rights and licensing (below). Publishing it means
+making `main` that branch:
+
+1. Merge `main` into the edition branch first, so fixes made to the live site
+   aren't lost. Generated files (pages, zip, .mp3 tags) may conflict: take either
+   side, then rerun `python3 generate.py`, which rebuilds them all.
+2. Refresh `rights.json` from the book's repo (`make rights`), run `generate.py`,
+   commit.
+3. `git switch main && git merge --ff-only edition-<year>`, push.
+
+`generate.py` reads `manifest-2026.yaml` (`MANIFEST` at its top). For a new
+edition, make `manifest-<year>.yaml` with that book's tunes and numbers and point
+`MANIFEST` at it; the track numbers in the .mp3 tags follow the manifest.
+
 ## Layout
 - `manifest-2026.yaml` — source of truth: numbered tunes, unnumbered extras, song books.
 - `rights.json` — copyright and licensing, **copied from the book's repo** (see
