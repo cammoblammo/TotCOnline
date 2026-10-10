@@ -1,4 +1,4 @@
-import yaml, os, html
+import yaml, os, html, json, re, sys
 
 # Run this from the repo root — it reads manifest-2026.yaml and writes
 # generated files into the current directory.
@@ -12,6 +12,46 @@ with open(MANIFEST) as f:
 
 tunes = data["tunes"]
 extras = data.get("extras", [])
+
+# ---------- rights and licensing ----------
+# rights.json comes from the book's repo: `make rights` there writes
+# build/rights/rights.json from its config/rights.yaml, the one source of
+# every copyright and licence text. Copy it here; never edit it by hand.
+# Tunes are matched by id (the tune's stem, also the .mp3's name). A track
+# whose tune isn't in it (FunkyRooster: no source in the book's repo) needs
+# `rights: own` in the manifest.
+RIGHTS = "rights.json"
+if not os.path.exists(RIGHTS):
+    sys.exit(f"ERROR: {RIGHTS} is missing. In the book's repo run `make rights`, "
+             "then copy build/rights/rights.json here.")
+with open(RIGHTS) as f:
+    rights = json.load(f)
+SNIP = rights["snippets"]
+rights_by_id = {r["id"]: r for r in rights["tunes"]}
+
+def tune_rights(t):
+    """The rights.json entry for a manifest tune (or an own tune's texts)."""
+    r = rights_by_id.get(t["id"])
+    if r:
+        return r
+    if t.get("rights") == "own":
+        return {"id": t["id"], "title": t["title"], "rights": "own",
+                "composer_credit": SNIP["AUTHOR"], "download_allowed": True,
+                "footer": rights["own"]["footer"],
+                "track_comment": rights["own"]["track_comment"], "credit": None}
+    sys.exit(f"ERROR: {t['id']} isn't in {RIGHTS}. Give its tune rights in the book's "
+             "config/rights.yaml (then make rights and copy it here), or, for a track "
+             "of your own with no source there, add `rights: own` to its manifest entry.")
+
+# Every track the site publishes: check its rights before writing anything.
+# A third-party-restricted tune's track may only be offered for download if
+# its holder agreed to that ("download" in granted: in the book's repo).
+published = [t for t in tunes if t["status"] == "available"] + extras
+refused = [t["id"] for t in published if not tune_rights(t)["download_allowed"]]
+if refused:
+    sys.exit("ERROR: not allowed to publish these tracks as free downloads (their holders "
+             "haven't agreed to it; see granted: in the book's config/rights.yaml): "
+             + ", ".join(refused) + ". Set them to coming_soon, or get the permission.")
 
 os.makedirs(OUT, exist_ok=True)
 os.makedirs(f"{OUT}/tunes", exist_ok=True)
@@ -195,6 +235,23 @@ audio { width: 100%; margin: 20px 0; }
 }
 .hub-card .hub-card-title { font-weight: 700; font-size: 16px; }
 .hub-card .hub-card-desc { font-size: 13px; color: var(--color-muted); }
+
+.notice { font-size: 13px; color: var(--color-muted); margin: 12px 0 0; line-height: 1.45; }
+.notice a, .prose a, .site-footer a { color: var(--color-accent-text); text-decoration: underline; }
+.rights-line { font-size: 13px; color: var(--color-muted); text-align: center; margin: 4px 0 0; }
+
+.prose { font-size: 15px; line-height: 1.55; overflow-wrap: break-word; }
+.prose h2 { font-size: 18px; margin: 24px 0 6px; }
+.prose ul { padding-left: 22px; }
+.prose li { margin: 4px 0; }
+
+.site-footer {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 20px 32px;
+  font-size: 13px;
+  color: var(--color-muted);
+}
 """
 open(f"{OUT}/assets/css/style.css", "w").write(css)
 
@@ -231,9 +288,51 @@ def page(title, body, path, root="", description=SITE_DESCRIPTION):
 </head>
 <body>
 {body}
+<footer class="site-footer">{html.escape(SNIP["WORK"])} © {html.escape(SNIP["AUTHOR"])}, {html.escape(SNIP["LICENCE_NAME"])} · <a href="{root}licence.html">Using these tunes</a> · <a href="{root}credits.html">Credits</a></footer>
 </body>
 </html>
 """
+
+# ---------- licensing text as HTML ----------
+LINK_RE = re.compile(r"(https?://[^\s<]*[^\s<.,;:)]|[\w.+-]+@[\w-]+(?:\.[\w-]+)+)")
+
+def linkify(text):
+    """Escape text for HTML, with URLs and email addresses as links."""
+    out, pos = [], 0
+    for m in LINK_RE.finditer(text):
+        out.append(html.escape(text[pos:m.start()]))
+        link = m.group(0)
+        href = link if "://" in link else f"mailto:{link}"
+        out.append(f'<a href="{html.escape(href)}">{html.escape(link)}</a>')
+        pos = m.end()
+    out.append(html.escape(text[pos:]))
+    return "".join(out)
+
+def md_html(text):
+    """rights.json's light Markdown: "## " headings, "- " lists, paragraphs."""
+    out = []
+    for block in re.split(r"\n\s*\n", text.strip()):
+        lines = [l.strip() for l in block.splitlines() if l.strip()]
+        if lines[0].startswith("## "):
+            out.append(f"<h2>{linkify(lines[0][3:])}</h2>")
+            lines = lines[1:]
+        if not lines:
+            continue
+        if all(l.startswith("- ") for l in lines):
+            out.append("<ul>" + "".join(f"<li>{linkify(l[2:])}</li>" for l in lines) + "</ul>")
+        else:
+            out.append(f"<p>{linkify(' '.join(lines))}</p>")
+    return "\n".join(out)
+
+def md_text(text):
+    """The same, as plain text (LICENSE.txt): headings lose their "## "."""
+    return re.sub(r"^## ", "", text.strip(), flags=re.M) + "\n"
+
+def download_notice(r=None):
+    """The download notice; on a restricted tune's page (r: its rights),
+    the one that says the tune itself isn't under the licence."""
+    key = "download_notice_restricted" if r and r["rights"] == "third-party-restricted" else "download_notice"
+    return f'<p class="notice">{linkify(rights["texts"][key])}</p>'
 
 # ---------- tunes/index.html ----------
 groups = []
@@ -266,6 +365,57 @@ if extras:
 
 import glob, zipfile, zlib
 
+# ---------- MP3 tags ----------
+# Each published track's tags come from rights.json (copyright, licence,
+# composer) and the manifest (title, track number: the site's numbering).
+# All other frames are removed (left over from the M4A conversion), except
+# iTunSMPB, which players use for gapless playback. A file is rewritten
+# only when its tags differ, so regenerating doesn't churn git or the zip.
+from mutagen.id3 import ID3, ID3NoHeaderError, TIT2, TPE1, TCOM, TALB, TRCK, TCOP, COMM, WCOP, WOAS
+
+KEEP_FRAMES = {"TXXX:iTunSMPB"}
+
+def track_frames(t):
+    r = tune_rights(t)
+    frames = [
+        TIT2(encoding=3, text=t["title"]),
+        TPE1(encoding=3, text=SNIP["AUTHOR"]),
+        TCOM(encoding=3, text=r["composer_credit"]),
+        TALB(encoding=3, text=SNIP["WORK"]),
+        # ID3 says the copyright frame starts with a year: "2026 Cameron Horsburgh"
+        TCOP(encoding=3, text=rights["track_copyright"]),
+        COMM(encoding=3, lang="eng", desc="", text=r["track_comment"]),
+        WCOP(url=SNIP["LICENCE_URL"]),
+        WOAS(url=f"{SITE_URL}/tunes/{t['id']}.html"),
+    ]
+    if t.get("number"):
+        frames.append(TRCK(encoding=3, text=str(t["number"])))
+    return frames
+
+def tag_track(path, frames):
+    """Give the file exactly these frames (plus KEEP_FRAMES); True if changed."""
+    try:
+        tags = ID3(path)
+    except ID3NoHeaderError:
+        tags = ID3()
+    want = {f.HashKey: f.pprint() for f in frames}
+    have = {k: f.pprint() for k, f in tags.items() if k not in KEEP_FRAMES}
+    if have == want:
+        return False
+    for k in list(tags.keys()):
+        if k not in KEEP_FRAMES:
+            del tags[k]
+    for f in frames:
+        tags.add(f)
+    tags.save(path, v2_version=4)
+    return True
+
+retagged = [t["id"] for t in published
+            if t.get("file") and os.path.exists(f"{OUT}/{t['file']}")
+            and tag_track(f"{OUT}/{t['file']}", track_frames(t))]
+if retagged:
+    print(f"Retagged {len(retagged)} track(s): {', '.join(retagged)}")
+
 # Build the "download everything" zip from whatever .mp3 files are currently
 # in media/audio/. It's only rebuilt when the set of mp3s or their contents
 # differ from what's already in the zip, so regenerating the site doesn't
@@ -281,6 +431,13 @@ def file_crc(path):
             crc = zlib.crc32(chunk, crc)
     return crc
 
+# The licence for the tracks (rights.json's licence_txt), in the zip and
+# beside the tracks as media/audio/LICENSE.txt
+LICENSE_TXT = md_text(rights["texts"]["licence_txt"]).encode("utf-8")
+license_path = f"{audio_dir}/LICENSE.txt"
+if not os.path.exists(license_path) or open(license_path, "rb").read() != LICENSE_TXT:
+    open(license_path, "wb").write(LICENSE_TXT)
+
 def zip_is_current(zip_path, mp3_files):
     # Compare by filename and CRC32 rather than mtime — git checkouts reset
     # mtimes, so timestamps can't be trusted here.
@@ -292,6 +449,7 @@ def zip_is_current(zip_path, mp3_files):
     except zipfile.BadZipFile:
         return False
     wanted = {os.path.basename(p): file_crc(p) for p in mp3_files}
+    wanted["LICENSE.txt"] = zlib.crc32(LICENSE_TXT)
     return existing == wanted
 
 all_zip_button = ""
@@ -304,6 +462,7 @@ if mp3_files:
         with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
             for fpath in mp3_files:
                 zf.write(fpath, arcname=os.path.basename(fpath))
+            zf.writestr("LICENSE.txt", LICENSE_TXT)
     zip_mb = round(os.path.getsize(zip_path) / 1_000_000)
     all_zip_button = f'<a class="button" href="../{ZIP_REL_PATH}">{DOWNLOAD_ICON} Download All Backing Tracks (zip, {zip_mb} MB)</a>'
 else:
@@ -322,6 +481,7 @@ tunes_index_body = f"""<div class="container">
     {all_zip_button}
     <a class="button" href="../books/index.html">{DOWNLOAD_ICON} Get the Song Books</a>
   </div>
+  {download_notice()}
 </div>
 """
 open(f"{OUT}/tunes/index.html", "w").write(page("Tunes Off the Chain — Tunes", tunes_index_body, "tunes/index.html", root="../",
@@ -335,9 +495,11 @@ def tune_page(t, is_extra=False):
   <div class="tune-header">
     {num_html}
     <div class="tune-title">{html.escape(t["title"])}</div>
+    <p class="rights-line">{linkify(tune_rights(t)["footer"])}</p>
   </div>
   <audio controls preload="none" src="../{t['file']}"></audio>
   <a class="button" href="../{t['file']}" download>{DOWNLOAD_ICON} Download this tune</a>
+  {download_notice(tune_rights(t))}
 </div>
 """
     return page(f"Tunes Off the Chain — {t['title']}", body, f"tunes/{t['id']}.html", root="../",
@@ -387,6 +549,7 @@ books_body = f"""<div class="container">
   <div class="hub-links">
     {book_cards}
   </div>
+  {download_notice()}
 </div>
 """
 open(f"{OUT}/books/index.html", "w").write(page("Tunes Off the Chain — Song Books", books_body, "books/", root="../",
@@ -409,9 +572,47 @@ hub_body = """<div class="container">
         <div class="hub-card-desc">Download the trumpet and trombone books</div>
       </div>
     </a>
+    <a class="hub-card" href="licence.html">
+      <div>
+        <div class="hub-card-title">Using These Tunes</div>
+        <div class="hub-card-desc">Free to copy, share and adapt for non-commercial use</div>
+      </div>
+    </a>
   </div>
 </div>
 """
 open(f"{OUT}/index.html", "w").write(page("Tunes Off the Chain", hub_body, ""))
+
+# ---------- licence.html, credits.html ----------
+# The licence page (rights.json's licence_page) and the third-party credits:
+# the site's tunes (numbered and extras) that aren't the author's own, in
+# the groups and wording of the book's credits list.
+licence_body = f"""<div class="container">
+  <a class="back-link" href="index.html">{BACK_ICON} Home</a>
+  <div class="prose">
+{md_html(rights["texts"]["licence_page"])}
+  </div>
+</div>
+"""
+open(f"{OUT}/licence.html", "w").write(page("Tunes Off the Chain — Using These Tunes", licence_body, "licence.html",
+    description=rights["texts"]["download_notice"]))
+
+site_tunes = [tune_rights(t) for t in tunes + extras]
+cred = rights["credits"]
+credit_html = f"<h2>{linkify(cred['heading'])}</h2>\n<p>{linkify(cred['intro'])}</p>\n"
+for g in cred["groups"]:
+    entries = [r["credit"] for r in site_tunes if r["rights"] in g["kinds"] and r.get("credit")]
+    if entries:
+        credit_html += f"<h2>{linkify(g['heading'])}</h2>\n<ul>" + "".join(f"<li>{linkify(e)}</li>" for e in entries) + "</ul>\n"
+if cred["other"]:
+    credit_html += f"<h2>{linkify(cred['other_heading'])}</h2>\n<ul>" + "".join(f"<li>{linkify(e)}</li>" for e in cred["other"]) + "</ul>\n"
+credits_body = f"""<div class="container">
+  <a class="back-link" href="index.html">{BACK_ICON} Home</a>
+  <div class="prose">
+{credit_html}  </div>
+</div>
+"""
+open(f"{OUT}/credits.html", "w").write(page("Tunes Off the Chain — Credits", credits_body, "credits.html",
+    description="The tunes in Tunes Off the Chain that are public domain or used with permission."))
 
 print("Generated:", sum(len(files) for _, _, files in os.walk(OUT)), "files")

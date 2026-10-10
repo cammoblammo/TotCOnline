@@ -168,3 +168,20 @@ audio { width: 100%; margin: 20px 0; }
 }
 .hub-card .hub-card-title { font-weight: 700; font-size: 16px; }
 .hub-card .hub-card-desc { font-size: 13px; color: var(--color-muted); }
+
+.notice { font-size: 13px; color: var(--color-muted); margin: 12px 0 0; line-height: 1.45; }
+.notice a, .prose a, .site-footer a { color: var(--color-accent-text); text-decoration: underline; }
+.rights-line { font-size: 13px; color: var(--color-muted); text-align: center; margin: 4px 0 0; }
+
+.prose { font-size: 15px; line-height: 1.55; overflow-wrap: break-word; }
+.prose h2 { font-size: 18px; margin: 24px 0 6px; }
+.prose ul { padding-left: 22px; }
+.prose li { margin: 4px 0; }
+
+.site-footer {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 20px 32px;
+  font-size: 13px;
+  color: var(--color-muted);
+}
