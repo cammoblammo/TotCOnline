@@ -1,7 +1,8 @@
 # Tunes Off the Chain — website
 
 Static site for the Tunes Off the Chain brass method, served by GitHub Pages
-at tunesoffthechain.au (see CNAME). The site publishes only its own pages and
+at tunesoffthechain.au. The domain is set in the repo's Settings → Pages; `CNAME`
+only records it. The site publishes only its own pages and
 media (see "Deploying"), but the repo itself is public on GitHub, so keep
 everything here, this README included, free of anything private.
 
@@ -13,7 +14,8 @@ making `main` that branch:
 
 1. Merge `main` into the edition branch first, so fixes made to the live site
    aren't lost. Generated pages may conflict: take either side, then rerun
-   `python3 generate.py`, which rebuilds them all.
+   `python3 generate.py`, which rebuilds them all. An .mp3 replaced on one side
+   may conflict too: take the new recording.
 2. Refresh `rights.json` from the book's repo (`make rights`), run `generate.py`,
    commit.
 3. `git switch main && git merge --ff-only edition-<year>`, push.
@@ -35,8 +37,8 @@ edition, make `manifest-<year>.yaml` with that book's tunes and numbers and poin
   (og-image.png). Static files, not generated; `favicon.svg` is the master.
 - `media/audio/` — backing tracks (.mp3). `totc-all-tunes.zip` is built there too,
   but not committed (.gitignore).
-- `.github/workflows/pages.yml` — builds and deploys the site (see "Deploying").
 - `media/books/` — trumpet and trombone PDFs.
+- `.github/workflows/pages.yml` — builds and deploys the site (see "Deploying").
 
 ## Regenerating
 Edit manifest-2026.yaml (or generate.py), then from the repo root:
@@ -60,8 +62,13 @@ a published track has no rights or isn't allowed to be a free download.
 result, so the .mp3s in git stay as they are.
 
 ## Adding or updating audio
-1. Copy the .mp3 into media/audio/ — the filename must exactly match the `file:`
-   path in the manifest (e.g. HandsUp.mp3).
+1. Convert the original recording (.m4a) to a 192 kbps .mp3 in media/audio/. The
+   filename must exactly match the `file:` path in the manifest (e.g. HandsUp.mp3):
+
+       ffmpeg -i 01-HandsUp.m4a -map 0:a -map_metadata -1 -c:a libmp3lame -b:a 192k media/audio/HandsUp.mp3
+
+   Convert from the original, never from another .mp3. Keep the .m4a somewhere
+   outside the repo; git ignores .m4a files anyway.
 2. For a tune that was `coming_soon`, set its `status` to `available` and fill in
    `file`.
 3. Run generate.py and commit the .mp3 with the pages. It needn't be tagged: the
@@ -80,7 +87,8 @@ book's repo (`TunesOffTheChain2026`, `config/rights.yaml`; its authoring guide's
 3. `python3 generate.py`, then commit.
 
 Do it whenever `rights.yaml` changes there (a permission, the wording, a new
-tune's rights). From `rights.json`, generate.py makes:
+tune's rights). Until this edition is published, copy it to `main` as well: the
+live site tags its tracks from its own copy. From `rights.json`, generate.py makes:
 
 - `licence.html` ("Using these tunes") and `credits.html` (the third-party tunes
   among this site's tunes, in the book's wording), linked from every page's footer
