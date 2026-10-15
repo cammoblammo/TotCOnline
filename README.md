@@ -1,9 +1,9 @@
 # Tunes Off the Chain — website
 
 Static site for the Tunes Off the Chain brass method, served by GitHub Pages
-at tunesoffthechain.au (see CNAME). The whole repo is published as-is (see
-"Deploying"), so this README is publicly reachable at /README.md — keep it free
-of anything private.
+at tunesoffthechain.au (see CNAME). The site publishes only its own pages and
+media (see "Deploying"), but the repo itself is public on GitHub, so keep
+everything here, this README included, free of anything private.
 
 ## Layout
 - `manifest-2026.yaml` — source of truth: numbered tunes, unnumbered extras, song books.
@@ -55,10 +55,14 @@ result, so the .mp3s in git stay as they are.
 Pages is set to deploy from GitHub Actions, not from a branch. On every push,
 `.github/workflows/pages.yml` checks out the branch, runs
 `python3 generate.py --tag-tracks` (which tags the .mp3s and builds the zip) and
-packages the repo as it then stands (minus `.git` and
-`.github`) as the site. Only `main` is deployed. On any other branch the run stops
-there, and its `github-pages` artifact (on the run's page) is the site that branch
-would publish.
+publishes the site's own files: `index.html`, `favicon.ico`, `assets/`, `books/`,
+`media/` and `tunes/` (and `licence.html` and `credits.html`, once they exist). The
+README, `generate.py`, the manifest and `rights.json` stay off the site. A new
+top-level file the site needs must be added to that list in the workflow.
+
+Only `main` is deployed. On any other branch the run stops there, and its
+`github-pages` artifact (on the run's page) is the site that branch would
+publish, for checking an edition before it goes live.
 
 So the zip and the tags never go into git: a new track means one small commit,
 not a fresh 80 MB zip.

@@ -61,9 +61,6 @@ os.makedirs(f"{OUT}/assets/fonts", exist_ok=True)
 os.makedirs(f"{OUT}/media/audio", exist_ok=True)
 os.makedirs(f"{OUT}/media/books", exist_ok=True)
 
-# .nojekyll
-open(f"{OUT}/.nojekyll", "w").close()
-
 # ---------- shared stylesheet ----------
 css = """@font-face {
   font-family: 'Decaf Please';
