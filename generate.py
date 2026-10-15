@@ -1,4 +1,4 @@
-import yaml, os, html
+import yaml, os, html, json, sys
 
 # Run this from the repo root — it reads manifest-2026.yaml and writes
 # generated files into the current directory.
@@ -12,6 +12,46 @@ with open(MANIFEST) as f:
 
 tunes = data["tunes"]
 extras = data.get("extras", [])
+
+# ---------- rights and licensing ----------
+# rights.json comes from the book's repo: `make rights` there writes
+# build/rights/rights.json from its config/rights.yaml, the one source of
+# every copyright and licence text. Copy it here; never edit it by hand.
+# Tunes are matched by id (the tune's stem, also the .mp3's name). A track
+# whose tune isn't in it (FunkyRooster: no source in the book's repo) needs
+# `rights: own` in the manifest.
+RIGHTS = "rights.json"
+if not os.path.exists(RIGHTS):
+    sys.exit(f"ERROR: {RIGHTS} is missing. In the book's repo run `make rights`, "
+             "then copy build/rights/rights.json here.")
+with open(RIGHTS) as f:
+    rights = json.load(f)
+SNIP = rights["snippets"]
+rights_by_id = {r["id"]: r for r in rights["tunes"]}
+
+def tune_rights(t):
+    """The rights.json entry for a manifest tune (or an own tune's texts)."""
+    r = rights_by_id.get(t["id"])
+    if r:
+        return r
+    if t.get("rights") == "own":
+        return {"id": t["id"], "title": t["title"], "rights": "own",
+                "composer_credit": SNIP["AUTHOR"], "download_allowed": True,
+                "footer": rights["own"]["footer"],
+                "track_comment": rights["own"]["track_comment"], "credit": None}
+    sys.exit(f"ERROR: {t['id']} isn't in {RIGHTS}. Give its tune rights in the book's "
+             "config/rights.yaml (then make rights and copy it here), or, for a track "
+             "of your own with no source there, add `rights: own` to its manifest entry.")
+
+# Every track the site publishes: check its rights before writing anything.
+# A third-party-restricted tune's track may only be offered for download if
+# its holder agreed to that ("download" in granted: in the book's repo).
+published = [t for t in tunes if t["status"] == "available"] + extras
+refused = [t["id"] for t in published if not tune_rights(t)["download_allowed"]]
+if refused:
+    sys.exit("ERROR: not allowed to publish these tracks as free downloads (their holders "
+             "haven't agreed to it; see granted: in the book's config/rights.yaml): "
+             + ", ".join(refused) + ". Set them to coming_soon, or get the permission.")
 
 os.makedirs(OUT, exist_ok=True)
 os.makedirs(f"{OUT}/tunes", exist_ok=True)
@@ -265,6 +305,61 @@ if extras:
     extra_rows += "</div>\n"
 
 import glob, zipfile, zlib
+
+# ---------- MP3 tags ----------
+# Each published track's tags come from rights.json (copyright, licence,
+# composer) and the manifest (title, track number: the site's numbering).
+# All other frames are removed (left over from the M4A conversion), except
+# iTunSMPB, which players use for gapless playback. A file is rewritten
+# only when its tags differ.
+# Tagging only happens with --tag-tracks, which the deploy workflow passes
+# (.github/workflows/pages.yml): the published copies get tagged, and the
+# .mp3s in git never change, so a wording change costs git nothing.
+from mutagen.id3 import ID3, ID3NoHeaderError, TIT2, TPE1, TCOM, TALB, TRCK, TCOP, COMM, WCOP, WOAS
+
+KEEP_FRAMES = {"TXXX:iTunSMPB"}
+
+def track_frames(t):
+    r = tune_rights(t)
+    frames = [
+        TIT2(encoding=3, text=t["title"]),
+        TPE1(encoding=3, text=SNIP["AUTHOR"]),
+        TCOM(encoding=3, text=r["composer_credit"]),
+        TALB(encoding=3, text=SNIP["WORK"]),
+        # ID3 says the copyright frame starts with a year: "2026 Cameron Horsburgh"
+        TCOP(encoding=3, text=rights["track_copyright"]),
+        COMM(encoding=3, lang="eng", desc="", text=r["track_comment"]),
+        WCOP(url=SNIP["LICENCE_URL"]),
+        WOAS(url=f"{SITE_URL}/tunes/{t['id']}.html"),
+    ]
+    if t.get("number"):
+        frames.append(TRCK(encoding=3, text=str(t["number"])))
+    return frames
+
+def tag_track(path, frames):
+    """Give the file exactly these frames (plus KEEP_FRAMES); True if changed."""
+    try:
+        tags = ID3(path)
+    except ID3NoHeaderError:
+        tags = ID3()
+    want = {f.HashKey: f.pprint() for f in frames}
+    have = {k: f.pprint() for k, f in tags.items() if k not in KEEP_FRAMES}
+    if have == want:
+        return False
+    for k in list(tags.keys()):
+        if k not in KEEP_FRAMES:
+            del tags[k]
+    for f in frames:
+        tags.add(f)
+    tags.save(path, v2_version=4)
+    return True
+
+TAG_TRACKS = "--tag-tracks" in sys.argv[1:]
+retagged = [t["id"] for t in published
+            if TAG_TRACKS and t.get("file") and os.path.exists(f"{OUT}/{t['file']}")
+            and tag_track(f"{OUT}/{t['file']}", track_frames(t))]
+if retagged:
+    print(f"Retagged {len(retagged)} track(s): {', '.join(retagged)}")
 
 # Build the "download everything" zip from whatever .mp3 files are currently
 # in media/audio/. It isn't committed (.gitignore): the deploy workflow builds

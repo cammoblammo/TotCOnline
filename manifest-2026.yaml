@@ -226,9 +226,12 @@ tunes:
     status: available
 
 extras:  # not in the 2026 book, unnumbered, listed at the end
+  # rights: only for a track whose tune isn't in rights.json (it has no
+  # source in the book's repo); "own" is the only value allowed here.
   - id: FunkyRooster
     title: "Funky Rooster"
     file: media/audio/FunkyRooster.mp3
+    rights: own
   - id: BootsNCats
     title: "Boots 'n' Cats"
     file: media/audio/BootsNCats.mp3

@@ -7,6 +7,8 @@ of anything private.
 
 ## Layout
 - `manifest-2026.yaml` — source of truth: numbered tunes, unnumbered extras, song books.
+- `rights.json` — copyright and licensing, **copied from the book's repo**
+  (`make rights` there); never edit it here. Only the .mp3 tags use it on this branch.
 - `generate.py` — builds the site from the manifest.
 - `index.html`, `tunes/`, `books/`, `assets/css/style.css` — **generated**; don't hand-edit,
   change `generate.py` (or the manifest) and regenerate instead.
@@ -23,7 +25,8 @@ Edit manifest-2026.yaml (or generate.py), then from the repo root:
 
     python3 generate.py
 
-(needs pyyaml: `pip install pyyaml --break-system-packages`)
+(needs pyyaml and mutagen: `pip install pyyaml mutagen --break-system-packages`,
+or Debian's `python3-yaml` and `python3-mutagen`)
 
 This rewrites the CSS, the home page, the books page, tunes/index.html and every
 tunes/<id>.html page. It builds the all-tunes zip for previewing, only when the set
@@ -31,7 +34,15 @@ of .mp3 files in media/audio/ or their contents have changed; the zip isn't
 committed.
 
 It also warns about any tune marked `available` whose .mp3 is missing, and deletes
-tune pages that are no longer in the manifest.
+tune pages that are no longer in the manifest. It stops, before writing anything,
+if a published track has no entry in `rights.json` (a track of your own with no
+source in the book's repo needs `rights: own` in the manifest) or isn't allowed
+to be a free download.
+
+`python3 generate.py --tag-tracks` also tags the .mp3 files from `rights.json`
+and the manifest: title, track number, artist, album, composer, copyright,
+licence and the tune's page. The deploy workflow does that; don't commit the
+result, so the .mp3s in git stay as they are.
 
 ## Adding or updating audio
 1. Copy the .mp3 into media/audio/ — the filename must exactly match the `file:`
@@ -42,14 +53,15 @@ tune pages that are no longer in the manifest.
 
 ## Deploying
 Pages is set to deploy from GitHub Actions, not from a branch. On every push,
-`.github/workflows/pages.yml` checks out the branch, runs `python3 generate.py`
-(which builds the zip) and packages the repo as it then stands (minus `.git` and
+`.github/workflows/pages.yml` checks out the branch, runs
+`python3 generate.py --tag-tracks` (which tags the .mp3s and builds the zip) and
+packages the repo as it then stands (minus `.git` and
 `.github`) as the site. Only `main` is deployed. On any other branch the run stops
 there, and its `github-pages` artifact (on the run's page) is the site that branch
 would publish.
 
-So the zip never goes into git: a new track means one small commit, not a fresh
-80 MB zip.
+So the zip and the tags never go into git: a new track means one small commit,
+not a fresh 80 MB zip.
 
 ## Updating the song books
 Put the new PDFs in media/books/ and update the `books:` entries in the manifest.
