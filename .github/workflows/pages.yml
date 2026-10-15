@@ -1,0 +1,43 @@
+# Builds the site and publishes it to GitHub Pages. The all-tunes zip and the
+# .mp3 tags are made here, not committed (see README, "Deploying").
+# Every branch is built, so an edition branch can be checked (the run's
+# github-pages artifact); only main is deployed.
+name: Pages
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - run: pip install pyyaml mutagen
+      - run: python3 generate.py --tag-tracks
+      # The site is the repo as it stands after generating, as when Pages
+      # served the branch directly (.git and .github are left out).
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: .
+
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

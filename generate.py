@@ -267,9 +267,9 @@ if extras:
 import glob, zipfile, zlib
 
 # Build the "download everything" zip from whatever .mp3 files are currently
-# in media/audio/. It's only rebuilt when the set of mp3s or their contents
-# differ from what's already in the zip, so regenerating the site doesn't
-# create a new 75 MB blob in git every time.
+# in media/audio/. It isn't committed (.gitignore): the deploy workflow builds
+# it fresh. Locally it's only rebuilt when the set of mp3s or their contents
+# differ from what's already in the zip.
 ZIP_REL_PATH = "media/audio/totc-all-tunes.zip"
 audio_dir = f"{OUT}/media/audio"
 mp3_files = sorted(glob.glob(f"{audio_dir}/*.mp3"))
