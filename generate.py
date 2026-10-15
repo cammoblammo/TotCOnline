@@ -370,7 +370,10 @@ import glob, zipfile, zlib
 # composer) and the manifest (title, track number: the site's numbering).
 # All other frames are removed (left over from the M4A conversion), except
 # iTunSMPB, which players use for gapless playback. A file is rewritten
-# only when its tags differ, so regenerating doesn't churn git or the zip.
+# only when its tags differ.
+# Tagging only happens with --tag-tracks, which the deploy workflow passes
+# (.github/workflows/pages.yml): the published copies get tagged, and the
+# .mp3s in git never change, so a wording change costs git nothing.
 from mutagen.id3 import ID3, ID3NoHeaderError, TIT2, TPE1, TCOM, TALB, TRCK, TCOP, COMM, WCOP, WOAS
 
 KEEP_FRAMES = {"TXXX:iTunSMPB"}
@@ -410,16 +413,17 @@ def tag_track(path, frames):
     tags.save(path, v2_version=4)
     return True
 
+TAG_TRACKS = "--tag-tracks" in sys.argv[1:]
 retagged = [t["id"] for t in published
-            if t.get("file") and os.path.exists(f"{OUT}/{t['file']}")
+            if TAG_TRACKS and t.get("file") and os.path.exists(f"{OUT}/{t['file']}")
             and tag_track(f"{OUT}/{t['file']}", track_frames(t))]
 if retagged:
     print(f"Retagged {len(retagged)} track(s): {', '.join(retagged)}")
 
 # Build the "download everything" zip from whatever .mp3 files are currently
-# in media/audio/. It's only rebuilt when the set of mp3s or their contents
-# differ from what's already in the zip, so regenerating the site doesn't
-# create a new 75 MB blob in git every time.
+# in media/audio/. It isn't committed (.gitignore): the deploy workflow builds
+# it fresh. Locally it's only rebuilt when the set of mp3s or their contents
+# differ from what's already in the zip.
 ZIP_REL_PATH = "media/audio/totc-all-tunes.zip"
 audio_dir = f"{OUT}/media/audio"
 mp3_files = sorted(glob.glob(f"{audio_dir}/*.mp3"))

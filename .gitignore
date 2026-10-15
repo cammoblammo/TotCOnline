@@ -15,3 +15,6 @@ __pycache__/
 # (uncomment if your .m4a originals live inside media/audio/ —
 #  only the .mp3 files need to be committed and served)
 # media/audio/*.m4a
+
+# Built by generate.py; the deploy workflow builds the published one.
+media/audio/totc-all-tunes.zip

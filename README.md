@@ -1,19 +1,19 @@
 # Tunes Off the Chain — website
 
 Static site for the Tunes Off the Chain brass method, served by GitHub Pages
-at tunesoffthechain.au (see CNAME). `.nojekyll` makes Pages serve files as-is,
-so this README is publicly reachable at /README.md — keep it free of anything
-private.
+at tunesoffthechain.au (see CNAME). The whole repo is published as-is (see
+"Deploying"), so this README is publicly reachable at /README.md — keep it free
+of anything private.
 
 ## Editions and branches
-GitHub Pages serves `main`: the live site, for the published edition. The next
+GitHub Pages serves `main` (see "Deploying"): the live site, for the published edition. The next
 edition is built up on its own branch, `edition-<year>` (now `edition-2027`): its
 tunes, tracks, books, and the rights and licensing (below). Publishing it means
 making `main` that branch:
 
 1. Merge `main` into the edition branch first, so fixes made to the live site
-   aren't lost. Generated files (pages, zip, .mp3 tags) may conflict: take either
-   side, then rerun `python3 generate.py`, which rebuilds them all.
+   aren't lost. Generated pages may conflict: take either side, then rerun
+   `python3 generate.py`, which rebuilds them all.
 2. Refresh `rights.json` from the book's repo (`make rights`), run `generate.py`,
    commit.
 3. `git switch main && git merge --ff-only edition-<year>`, push.
@@ -33,7 +33,9 @@ edition, make `manifest-<year>.yaml` with that book's tunes and numbers and poin
 - `assets/fonts/decaf-please.woff2` — self-hosted title font.
 - `assets/icons/`, `favicon.ico` — favicon, home-screen icon and the link-preview image
   (og-image.png). Static files, not generated; `favicon.svg` is the master.
-- `media/audio/` — backing tracks (.mp3) plus `totc-all-tunes.zip`.
+- `media/audio/` — backing tracks (.mp3). `totc-all-tunes.zip` is built there too,
+  but not committed (.gitignore).
+- `.github/workflows/pages.yml` — builds and deploys the site (see "Deploying").
 - `media/books/` — trumpet and trombone PDFs.
 
 ## Regenerating
@@ -45,21 +47,25 @@ Edit manifest-2026.yaml (or generate.py), then from the repo root:
 or Debian's `python3-yaml` and `python3-mutagen`)
 
 This rewrites the CSS, the home page, the books page, tunes/index.html and every
-tunes/<id>.html page. The all-tunes zip is only rebuilt when the set of .mp3 files
-in media/audio/ or their contents have changed, so routine regeneration won't add
-a new copy of it to git history.
+tunes/<id>.html page. It builds the all-tunes zip for previewing, only when the set
+of .mp3 files in media/audio/ or their contents have changed; the zip isn't
+committed.
 
 It also warns about any tune marked `available` whose .mp3 is missing, and deletes
-tune pages that are no longer in the manifest. It retags the .mp3 files from
-`rights.json` (only those whose tags differ) and stops, before writing anything, if
+tune pages that are no longer in the manifest. It stops, before writing anything, if
 a published track has no rights or isn't allowed to be a free download.
+
+`python3 generate.py --tag-tracks` also retags the .mp3 files from `rights.json`
+(see "Rights and licensing"). The deploy workflow does that; don't commit the
+result, so the .mp3s in git stay as they are.
 
 ## Adding or updating audio
 1. Copy the .mp3 into media/audio/ — the filename must exactly match the `file:`
    path in the manifest (e.g. HandsUp.mp3).
 2. For a tune that was `coming_soon`, set its `status` to `available` and fill in
    `file`.
-3. Run generate.py — the zip will be rebuilt automatically.
+3. Run generate.py and commit the .mp3 with the pages. It needn't be tagged: the
+   deploy workflow tags it.
 
 ## Rights and licensing
 
@@ -83,7 +89,7 @@ tune's rights). From `rights.json`, generate.py makes:
   page gets the variant saying the tune itself isn't covered, and shows the tune's
   copyright line under its title;
 - `media/audio/LICENSE.txt`, also put in the all-tunes zip;
-- every published .mp3's tags:
+- every published .mp3's tags, at deploy time (`--tag-tracks`):
 
   | Frame | Content |
   |---|---|
@@ -94,10 +100,9 @@ tune's rights). From `rights.json`, generate.py makes:
   | `COMM` comment | the tune's full copyright text (`track_comment`) |
   | `WCOP`, `WOAS` | the licence's URL, the tune's page here |
 
-  Every other frame is removed, except `TXXX:iTunSMPB` (gapless playback). A file
-  is rewritten only when its tags differ, so the first run after a wording change
-  rewrites every .mp3 (and the zip): about 230 MB of changed files for git. The
-  audio itself never changes.
+  Every other frame is removed, except `TXXX:iTunSMPB` (gapless playback). The
+  audio itself never changes. Only the published copies are tagged, so a wording
+  change costs git nothing; the .mp3s in git may carry older tags or none.
 
 **Tunes are matched by `id`**, the tune's stem in the book's repo and the .mp3's
 name. A track whose tune has no source in the book's repo (FunkyRooster) needs
@@ -107,6 +112,18 @@ name. A track whose tune has no source in the book's repo (FunkyRooster) needs
 download (`download_allowed: false` in `rights.json`) can't be published:
 generate.py stops and names it. Mark it `coming_soon` until the permission is
 widened in the book's `rights.yaml`.
+
+## Deploying
+Pages is set to deploy from GitHub Actions, not from a branch. On every push,
+`.github/workflows/pages.yml` checks out the branch, runs
+`python3 generate.py --tag-tracks` (which tags the .mp3s and builds the zip) and
+packages the repo as it then stands (minus `.git` and `.github`) as the site. Only
+`main` is deployed. On any other branch the run stops there, and its
+`github-pages` artifact (on the run's page) is the site that branch would
+publish, for checking an edition before it goes live.
+
+So the zip and the tags never go into git: a new track or a changed wording means
+one small commit, not a fresh 80 MB zip.
 
 ## Updating the song books
 Put the new PDFs in media/books/ and update the `books:` entries in the manifest.
