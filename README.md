@@ -58,7 +58,7 @@ a published track has no rights or isn't allowed to be a free download.
 1. Copy the .mp3 into media/audio/ — the filename must exactly match the `file:`
    path in the manifest (e.g. HandsUp.mp3).
 2. For a tune that was `coming_soon`, set its `status` to `available` and fill in
-   `file`. Still outstanding: WhereverYouMayBe (10) and HotCrossBuns (30).
+   `file`.
 3. Run generate.py — the zip will be rebuilt automatically.
 
 ## Rights and licensing

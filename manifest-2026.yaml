@@ -147,8 +147,8 @@ tunes:
   - number: 30
     id: HotCrossBuns
     title: "Hot Cross Buns"
-    file: null
-    status: coming_soon
+    file: media/audio/HotCrossBuns.mp3
+    status: available
   - number: 31
     id: JoesMama
     title: "Joe's Mama"
